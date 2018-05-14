@@ -1,0 +1,125 @@
+clf
+scene = 0;
+while(~ismember(scene, 1:4))
+    disp("Choose one of the available options below:");
+    scene = input("Select Scenario: 1 - Normal Solar System, 2 - Slow Jupiter, 3 - Moved Mars, 4 - Jumbo Jupiter");
+end
+
+timeframe = 0;
+while(timeframe < 1 || timeframe > 10000)
+    disp("Select a value between 1 and 10000 (inclusive)");
+    timeframe = input("How long (in years) should the simulation be run for?");
+end
+
+showTime = 0;
+while(~ismember(scene, 0:1:1))
+    disp("Select 0 for no, 1 for yes");
+    showTime = input("Show computation time (tm in seconds)?");
+end
+
+N = 15;
+X = initials(N);
+
+if(scene == 2)
+    X(5:7, 6) = X(5:7, 6) / 1000;
+elseif(scene == 3)
+    X(2:4, 5) = 1.2 * X(2:4, 4);
+else
+    X(1,6) = X(1,1) / 2;
+end
+
+%Scenario 1 - Standard Solar System
+
+AU = 149597870700;
+initScen1 = zeros(2*N, 3);
+for i=1:N
+    ex = X(2:4, i);
+    initScen1(i,:) = ex';
+end
+for i=N+1:2*N
+    ex = X(5:7, i - N);
+
+    initScen1(i,:) = ex';
+end
+startingVals1 = [initScen1(1:N,1);initScen1(1:N,2);initScen1(1:N,3);initScen1(N+1:2*N,1);initScen1(N+1:2*N,2);initScen1(N+1:2*N,3)];
+
+options = ['RelTol',1e-16,'AbsTol',1e-20];
+tm = cputime;
+[t,y] = ode23tb(@gravity, [0 365 * timeframe], startingVals1, options, N, X);
+tm = cputime - tm;
+if(showTime == 1)
+    disp("Computation time = " + tm);
+end
+
+% Inner: 2,5
+% Outer: 6,9
+% Extra: 10,15
+
+
+planets = {'Sol','Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Ceres','Vesta','Pallas','Hygiea','Interamnia'};
+
+a = 2;
+b = 6;
+figure(1)
+plot(y(:,1), y(:,1+N), '-bo')
+hold on
+for i = a:b
+    plot(y(:,i), y(:,i+N))
+end
+for i = a:b
+    plot(X(2,i),X(3,i), '-x')
+end
+legend([planets(1),planets(1,a:b)]);
+xlabel('X-Distance in AU');
+ylabel('Y-Distance in AU');
+title('Inner Planets Orbits');
+
+a = 6;
+b = 9;
+figure(2)
+plot(y(:,1), y(:,1+N), '-bo')
+hold on
+for i = a:b
+    plot(y(:,i), y(:,i+N))
+end
+for i = a:b
+    plot(X(2,i),X(3,i), '-x')
+end
+legend([planets(1),planets(1,a:b)]);
+xlabel('X-Distance in AU');
+ylabel('Y-Distance in AU');
+title('Outer Planets Orbits');
+
+a = 10;
+b = 15;
+figure(3)
+plot(y(:,1), y(:,1+N), '-bo')
+hold on
+for i = a:b
+    plot(y(:,i), y(:,i+N))
+end
+for i = a:b
+    plot(X(2,i),X(3,i), '-x')
+end
+legend([planets(1),planets(1,a:b)]);
+xlabel('X-Distance in AU');
+ylabel('Y-Distance in AU');
+title('Extra Bodies Orbits');
+
+a = 2;
+b = 15;
+figure(4)
+plot(y(:,1), y(:,1+N), '-bo')
+hold on
+for i = a:b
+    plot(y(:,i), y(:,i+N))
+end
+for i = a:b
+    plot(X(2,i),X(3,i), '-x')
+end
+legend([planets(1),planets(1,a:b)]);
+xlabel('X-Distance in AU');
+ylabel('Y-Distance in AU');
+title('All Orbits');
+
+
